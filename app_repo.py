@@ -39,7 +39,6 @@ regr_model = load_regression_model()
 
 ################################################################
 # DEFINICIÓN DE VARIABLES
-# Usamos el conjunto completo (regresión) como base
 feature_specs = [
     {"name": "Age", "type": "int"},
     {"name": "Heart_Rate", "type": "float"},
@@ -48,14 +47,16 @@ feature_specs = [
 ]
 
 ################################################################
+# INICIALIZACIÓN DEL ESTADO DE SESIÓN
+for spec in feature_specs:
+    if spec["name"] not in st.session_state:
+        st.session_state[spec["name"]] = 0.0 if spec["type"] == "float" else 0
+
+################################################################
 # FORMULARIO DE ENTRADA
 
 st.subheader("Formulario de datos de entrada")
 user_input = {}
-
-# Inicializar el estado de sesión (para permitir reiniciar)
-if "reset" not in st.session_state:
-    st.session_state.reset = False
 
 with st.form("formulario_prediccion"):
     cols = st.columns(2)
@@ -64,19 +65,17 @@ with st.form("formulario_prediccion"):
             if spec["type"] in ["int", "float"]:
                 user_input[spec["name"]] = st.number_input(
                     f"{spec['name']}",
-                    value=0.0 if spec["type"] == "float" else 0,
+                    value=st.session_state[spec["name"]],
                     key=spec["name"]
                 )
 
     submitted = st.form_submit_button("Obtener Predicciones")
-    reset = st.form_submit_button("🔄 Reiniciar valores")
 
-if reset:
-    # Reinicia los valores a cero
+# 🔄 BOTÓN DE REINICIO (fuera del formulario)
+if st.button("🔄 Reiniciar valores"):
     for spec in feature_specs:
         st.session_state[spec["name"]] = 0.0 if spec["type"] == "float" else 0
-    st.session_state.reset = True
-    st.experimental_rerun()
+    st.rerun()
 
 ################################################################
 # PROCESO DE PREDICCIÓN
@@ -86,7 +85,6 @@ if submitted:
     st.write("**Datos ingresados:**")
     st.dataframe(input_df)
 
-    # Subconjunto para clasificación (sin Weight)
     input_df_class = input_df[["Age", "Heart_Rate", "Duration"]]
 
     try:
