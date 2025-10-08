@@ -1,5 +1,6 @@
 import os
 os.system('pip install streamlit pandas lightgbm scikit-learn joblib')
+
 import streamlit as st
 import pandas as pd
 import pickle
@@ -81,52 +82,43 @@ if submitted:
     st.write("**Datos ingresados:**")
     st.dataframe(input_df)
 
-    # ----- Clasificación -----
+    # ---------------- Clasificación ----------------
     try:
-        input_class = input_df[["Age", "Heart_Rate", "Duration"]]  # subset for classifier
+        input_class = input_df[["Age", "Heart_Rate", "Duration"]]  # subset para clasificación
         pred_class = clas_model.predict(input_class)[0]
 
         if hasattr(clas_model, "predict_proba"):
             prob = clas_model.predict_proba(input_class)[0][1]
-            st.success(f"🔹 Predicción (Clasificación): **{pred_class}**  — Probabilidad positiva: **{prob:.2%}**")
+            st.success(f"🔹 Predicción (Clasificación): **{pred_class}** — Probabilidad positiva: **{prob:.2%}**")
         else:
             st.success(f"🔹 Predicción (Clasificación): **{pred_class}**")
 
     except Exception as e:
         st.error(f"❌ Error en la predicción de clasificación: {e}")
-    #------------- Regresión -----------------------------------------------
-    #------------- Regresión -----------------------------------------------
+
+    # ---------------- Regresión ----------------
     try:
+        # Reordenar columnas según las esperadas por el modelo
+        if hasattr(reg_model, "feature_names_in_"):
+            expected_features = reg_model.feature_names_in_
+            input_df = input_df.reindex(columns=expected_features, fill_value=0)
+            st.caption(f"📋 Columnas reordenadas según el modelo: {list(expected_features)}")
+        else:
+            st.warning("⚠️ El modelo no contiene metadatos de columnas. Se usará el orden actual.")
+
+        # Mostrar al usuario los datos que se enviarán al modelo
+        st.write("**Datos enviados al modelo de regresión:**")
+        st.dataframe(input_df)
+
         # Realizar predicción
         pred_reg = reg_model.predict(input_df)
 
-        # Intentar aplicar inverse_transform si el modelo lo soporta
-        try:
-            if hasattr(reg_model, "named_steps"):
-                preproc = reg_model.named_steps.get("preprocessor", None)
-                if preproc is not None:
-                    if hasattr(preproc, "y_scaler_"):
-                        pred_reg = preproc.y_scaler_.inverse_transform(pred_reg.reshape(-1, 1)).ravel()
-                        st.caption("✅ Se aplicó inverse_transform con preproc.y_scaler_")
-                    else:
-                        st.caption("⚠️ El preprocesador no tiene y_scaler_.")
-                else:
-                    st.caption("⚠️ El modelo no contiene un paso de preprocesamiento.")
-            else:
-                st.caption("⚠️ El modelo no parece ser un Pipeline.")
-        except Exception as e:
-            st.warning(f"⚠️ No se aplicó inverse_transform correctamente: {e}")
+        # Si el resultado es una lista o array, tomar el primer valor
+        pred_reg_value = pred_reg[0] if isinstance(pred_reg, (list, np.ndarray)) else pred_reg
 
-        # Asegurarse de que sea un valor escalar
-        pred_reg_value = float(pred_reg[0]) if isinstance(pred_reg, (list, np.ndarray)) else float(pred_reg)
-
-        # Mostrar resultado
+        # Mostrar resultado al usuario
         st.info(f"🔸 Predicción (Regresión): **{pred_reg_value:.3f}**")
+        st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
 
     except Exception as e:
-        st.error(f"❌ Error al realizar la predicción: {e}")
-
-
-
-
-
+        st.error(f"❌ Error al realizar la predicción de regresión: {e}")
