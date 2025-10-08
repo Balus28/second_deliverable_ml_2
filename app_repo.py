@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 import lightgbm
+import numpy as np
 
 # ===============================================================
 # CONFIGURACIÓN DE LA APP
@@ -115,6 +116,7 @@ if submitted:
             st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
     except Exception as e:
         st.error(f"Error al realizar la predicción: {e}")
+
 
 
 
