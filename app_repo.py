@@ -1,10 +1,8 @@
 import os
-os.system('pip install streamlit pandas joblib lightgbm')
+os.system('pip install streamlit pandas joblib lightgbm scikit-learn')
 import streamlit as st
 import pandas as pd
-import joblib
 import pickle
-import lightgbm
 
 ################################################################
 # CONFIGURACIÓN DE LA APP
@@ -19,33 +17,45 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.info("Introduce los valores de entrada y obtén una predicción automática con el modelo entrenado.")
+st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
 
 ################################################################
-# CARGA DEL MODELO
+# CARGA DE MODELOS
 
 @st.cache_resource
-def load_model():
+def load_classification_model():
     with open("modelo_clasificacion.pkl", "rb") as f:
-        model = pickle.load(f)  # Cambia el nombre si tu modelo se llama diferente
+        model = pickle.load(f)
     return model
 
-model = load_model()
+@st.cache_resource
+def load_regression_model():
+    with open("modelo_regresion.pkl", "rb") as f:
+        model = pickle.load(f)
+    return model
+
+clas_model = load_classification_model()
+regr_model = load_regression_model()
 
 ################################################################
 # DEFINICIÓN DE VARIABLES
-
+# Usamos el conjunto completo (regresión) como base
 feature_specs = [
     {"name": "Age", "type": "int"},
     {"name": "Heart_Rate", "type": "float"},
-    {"name": "Duration", "type": "float"}
+    {"name": "Duration", "type": "float"},
+    {"name": "Weight", "type": "float"}
 ]
 
-######################################################################
+################################################################
 # FORMULARIO DE ENTRADA
 
 st.subheader("Formulario de datos de entrada")
 user_input = {}
+
+# Inicializar el estado de sesión (para permitir reiniciar)
+if "reset" not in st.session_state:
+    st.session_state.reset = False
 
 with st.form("formulario_prediccion"):
     cols = st.columns(2)
@@ -53,14 +63,22 @@ with st.form("formulario_prediccion"):
         with cols[i % 2]:
             if spec["type"] in ["int", "float"]:
                 user_input[spec["name"]] = st.number_input(
-                    f"{spec['name']}", value=0.0 if spec["type"] == "float" else 0, key=spec["name"]
+                    f"{spec['name']}",
+                    value=0.0 if spec["type"] == "float" else 0,
+                    key=spec["name"]
                 )
-            elif spec["type"] == "cat":
-                user_input[spec["name"]] = st.selectbox(spec["name"], spec["options"], key=spec["name"])
 
-    submitted = st.form_submit_button("Obtener Predicción")
+    submitted = st.form_submit_button("Obtener Predicciones")
+    reset = st.form_submit_button("🔄 Reiniciar valores")
 
-#####################################################################
+if reset:
+    # Reinicia los valores a cero
+    for spec in feature_specs:
+        st.session_state[spec["name"]] = 0.0 if spec["type"] == "float" else 0
+    st.session_state.reset = True
+    st.experimental_rerun()
+
+################################################################
 # PROCESO DE PREDICCIÓN
 
 if submitted:
@@ -68,11 +86,27 @@ if submitted:
     st.write("**Datos ingresados:**")
     st.dataframe(input_df)
 
-    try:
-        prediction = model.predict(input_df)[0]
-        probability = model.predict_proba(input_df)[0][1]
+    # Subconjunto para clasificación (sin Weight)
+    input_df_class = input_df[["Age", "Heart_Rate", "Duration"]]
 
-        st.success(f"Predicción: **{prediction}**")
-        st.write(f"Probabilidad estimada de clase positiva: **{probability:.2%}**")
+    try:
+        ######################################
+        # SECCIÓN 1: CLASIFICACIÓN
+        ######################################
+        st.markdown("### 🔹 Predicción de Clasificación")
+        class_pred = clas_model.predict(input_df_class)[0]
+        class_prob = clas_model.predict_proba(input_df_class)[0][1]
+
+        st.success(f"Predicción (Clase): **{class_pred}**")
+        st.write(f"Probabilidad estimada de clase positiva: **{class_prob:.2%}**")
+
+        ######################################
+        # SECCIÓN 2: REGRESIÓN
+        ######################################
+        st.markdown("### 🔹 Predicción de Regresión")
+        regr_pred = regr_model.predict(input_df)[0]
+
+        st.success(f"Valor predicho (Regresión): **{regr_pred:.2f}**")
+
     except Exception as e:
         st.error(f"Ocurrió un error al realizar la predicción: {e}")
