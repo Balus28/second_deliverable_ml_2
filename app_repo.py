@@ -1,11 +1,13 @@
 import os
-os.system('pip install streamlit pandas joblib lightgbm scikit-learn')
+os.system('pip install streamlit pandas lightgbm scikit-learn joblib')
 import streamlit as st
 import pandas as pd
 import pickle
+import lightgbm
 
-################################################################
+# ===============================================================
 # CONFIGURACIÓN DE LA APP
+# ===============================================================
 st.set_page_config(page_title="Predicción Automática", page_icon="🤖", layout="wide")
 
 st.markdown(
@@ -18,9 +20,11 @@ st.markdown(
 )
 
 st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
+st.caption("💡 Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
 
-################################################################
+# ===============================================================
 # CARGA DE MODELOS
+# ===============================================================
 
 @st.cache_resource
 def load_classification_model():
@@ -34,77 +38,69 @@ def load_regression_model():
         model = pickle.load(f)
     return model
 
-clas_model = load_classification_model()
-regr_model = load_regression_model()
+try:
+    clas_model = load_classification_model()
+    reg_model = load_regression_model()
+    st.success("✅ Modelos cargados correctamente.")
+except Exception as e:
+    st.error(f"⚠️ Error al cargar los modelos: {e}")
 
-################################################################
+# ===============================================================
 # DEFINICIÓN DE VARIABLES
+# ===============================================================
 feature_specs = [
     {"name": "Age", "type": "int"},
     {"name": "Heart_Rate", "type": "float"},
     {"name": "Duration", "type": "float"},
-    {"name": "Weight", "type": "float"}
+    {"name": "Weight", "type": "float"}  # Solo usada para la regresión
 ]
 
-################################################################
-# INICIALIZACIÓN DEL ESTADO DE SESIÓN
-for spec in feature_specs:
-    if spec["name"] not in st.session_state:
-        st.session_state[spec["name"]] = 0.0 if spec["type"] == "float" else 0
-
-################################################################
+# ===============================================================
 # FORMULARIO DE ENTRADA
-
-st.subheader("Formulario de datos de entrada")
+# ===============================================================
+st.subheader("🧮 Formulario de datos de entrada")
 user_input = {}
 
 with st.form("formulario_prediccion"):
     cols = st.columns(2)
     for i, spec in enumerate(feature_specs):
         with cols[i % 2]:
-            if spec["type"] in ["int", "float"]:
-                user_input[spec["name"]] = st.number_input(
-                    f"{spec['name']}",
-                    value=st.session_state[spec["name"]],
-                    key=spec["name"]
-                )
+            user_input[spec["name"]] = st.number_input(
+                f"{spec['name']}",
+                value=0.0 if spec["type"] == "float" else 0,
+                key=spec["name"]
+            )
+    submitted = st.form_submit_button("🔍 Obtener Predicciones")
 
-    submitted = st.form_submit_button("Obtener Predicciones")
-
-# 🔄 BOTÓN DE REINICIO (fuera del formulario)
-if st.button("🔄 Reiniciar valores"):
-    for spec in feature_specs:
-        st.session_state[spec["name"]] = 0.0 if spec["type"] == "float" else 0
-    st.rerun()
-
-################################################################
+# ===============================================================
 # PROCESO DE PREDICCIÓN
-
+# ===============================================================
 if submitted:
     input_df = pd.DataFrame([user_input])
     st.write("**Datos ingresados:**")
     st.dataframe(input_df)
 
-    input_df_class = input_df[["Age", "Heart_Rate", "Duration"]]
-
+    # ----- Clasificación -----
     try:
-        ######################################
-        # SECCIÓN 1: CLASIFICACIÓN
-        ######################################
-        st.markdown("### 🔹 Predicción de Clasificación")
-        class_pred = clas_model.predict(input_df_class)[0]
-        class_prob = clas_model.predict_proba(input_df_class)[0][1]
+        input_class = input_df[["Age", "Heart_Rate", "Duration"]]  # subset for classifier
+        pred_class = clas_model.predict(input_class)[0]
 
-        st.success(f"Predicción (Clase): **{class_pred}**")
-        st.write(f"Probabilidad estimada de clase positiva: **{class_prob:.2%}**")
-
-        ######################################
-        # SECCIÓN 2: REGRESIÓN
-        ######################################
-        st.markdown("### 🔹 Predicción de Regresión")
-        regr_pred = regr_model.predict(input_df)[0]
-
-        st.success(f"Valor predicho (Regresión): **{regr_pred:.2f}**")
+        if hasattr(clas_model, "predict_proba"):
+            prob = clas_model.predict_proba(input_class)[0][1]
+            st.success(f"🔹 Predicción (Clasificación): **{pred_class}**  — Probabilidad positiva: **{prob:.2%}**")
+        else:
+            st.success(f"🔹 Predicción (Clasificación): **{pred_class}**")
 
     except Exception as e:
-        st.error(f"Ocurrió un error al realizar la predicción: {e}")
+        st.error(f"❌ Error en la predicción de clasificación: {e}")
+
+    # ----- Regresión -----
+    try:
+        pred_reg = reg_model.predict(input_df)[0]
+        st.info(f"🔸 Predicción (Regresión): **{pred_reg:.3f}**")
+    except Exception as e:
+        st.error(f"❌ Error en la predicción de regresión: {e}")
+
+# ===============================================================
+# NOTA FINAL
+# =================================
