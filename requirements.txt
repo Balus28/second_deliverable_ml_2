@@ -1,7 +1,6 @@
-import os
-os.system('pip install streamlit pandas joblib lightgbm')
-import streamlit as st
-import pandas as pd
-import joblib
-import pickle
-import lightgbm
+os
+streamlit
+pandas
+joblib
+pickle
+lightgbm
