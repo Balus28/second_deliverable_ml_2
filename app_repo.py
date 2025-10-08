@@ -94,30 +94,27 @@ if submitted:
     except Exception as e:
         st.error(f"❌ Error en la predicción de clasificación: {e}")
     #------------- Regresión -----------------------------------------------
-     try:
-        # Realizar predicción
-        pred_reg = reg_model.predict(input_df)
+    try:
+            # Realizar predicción
+            pred_reg = reg_model.predict(input_df)
+            
+            # Intentar aplicar inverse_transform si el preprocesador lo tiene
+            try:
+                preproc = reg_model.named_steps.get("preprocessor", None)
+                if preproc is not None and hasattr(preproc, "y_scaler_"):
+                    scaler_y = preproc.y_scaler_
+                    pred_reg = scaler_y.inverse_transform(pred_reg.reshape(-1, 1)).ravel()
+            except Exception as e:
+                st.warning(f"⚠️ No se aplicó inverse_transform: {e}")
         
-        # Intentar aplicar inverse_transform si el preprocesador lo tiene
-        try:
-            preproc = reg_model.named_steps.get("preprocessor", None)
-            if preproc is not None and hasattr(preproc, "y_scaler_"):
-                scaler_y = preproc.y_scaler_
-                pred_reg = scaler_y.inverse_transform(pred_reg.reshape(-1, 1)).ravel()
-        except Exception as e:
-            st.warning(f"⚠️ No se aplicó inverse_transform: {e}")
-    
-    # Tomar primer valor si es un array
-    pred_reg_value = pred_reg[0] if isinstance(pred_reg, (list, np.ndarray)) else pred_reg
-    
-    # Mostrar resultado al usuario
-    st.info(f"🔸 Predicción (Regresión): **{pred_reg_value:.3f}**")
-    st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")
-    
-except Exception as e:
-    st.error(f"Error al realizar la predicción: {e}")
-# ===============================================================
-# NOTA FINAL
-# =================================
+        # Tomar primer valor si es un array
+            pred_reg_value = pred_reg[0] if isinstance(pred_reg, (list, np.ndarray)) else pred_reg
+        
+        # Mostrar resultado al usuario
+            st.info(f"🔸 Predicción (Regresión): **{pred_reg_value:.3f}**")
+            st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
+    except Exception as e:
+        st.error(f"Error al realizar la predicción: {e}")
+
 
 
