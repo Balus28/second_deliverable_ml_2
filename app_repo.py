@@ -1,8 +1,10 @@
 import os
-os.system('pip install streamlit pandas joblib')
+os.system('pip install streamlit pandas joblib lightgbm')
 import streamlit as st
 import pandas as pd
 import joblib
+import pickle
+import lightgbm
 
 ################################################################
 # CONFIGURACIÓN DE LA APP
@@ -24,7 +26,8 @@ st.info("Introduce los valores de entrada y obtén una predicción automática c
 
 @st.cache_resource
 def load_model():
-    model = joblib.load("modelo_clasificacion.joblib")  # Cambia el nombre si tu modelo se llama diferente
+    with open("modelo_clasificacion.pkl", "rb") as f:
+        model = pickle.load(f)  # Cambia el nombre si tu modelo se llama diferente
     return model
 
 model = load_model()
