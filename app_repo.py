@@ -58,4 +58,6 @@ try:
     reg_model = load_regression_model()
     scaler_y = load_scaler_y()
     st.success("✅ Modelos cargados correctamente.")
-except Exceptio
+except Exception as e:
+        st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
