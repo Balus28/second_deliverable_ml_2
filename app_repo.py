@@ -45,8 +45,8 @@ def image_to_base64(path):
 
 # Rutas de las imágenes
 logo_path = os.path.join(ASSETS_DIR, "logo.png")
-icon_class_path = os.path.join(ASSETS_DIR, "class.png")
-icon_reg_path = os.path.join(ASSETS_DIR, "reg.png")
+icon_class_path = os.path.join(ASSETS_DIR, "icon_class.png")
+icon_reg_path = os.path.join(ASSETS_DIR, "icon_reg.png")
 
 # Validación de existencia
 if os.path.exists(logo_path):
@@ -227,6 +227,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
