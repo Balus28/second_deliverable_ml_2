@@ -13,7 +13,7 @@ import io
 
 ###################################################################################################
 # CONFIGURACIÓN DE LA APP
-st.set_page_config(page_title="Predicción Automática", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Predicción Automática", page_icon="assests/logo.png", layout="wide")
 
 st.markdown(
     """
@@ -65,15 +65,23 @@ else:
     icon_reg = None
 
 # Encabezado con logo
+st.set_page_config(page_title="Sistema de Predicción Automática", page_icon="assets/logo.png")
+
 if logo_img is not None:
-    col_logo, col_title = st.columns([1,8])
+    col_logo, col_title = st.columns([1, 8])
     with col_logo:
         st.image(logo_img, width=140, use_column_width=False)
     with col_title:
-        st.markdown("<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
+            unsafe_allow_html=True
+        )
 else:
-    st.title("Sistema de Predicción Automática")
+    # Use the same HTML-based header for consistent spacing
+    st.markdown(
+        "<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
+        unsafe_allow_html=True
+    )
 
 ##############################################################################################
 # CARGA DE MODELOS
@@ -227,6 +235,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
