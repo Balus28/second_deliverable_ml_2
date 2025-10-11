@@ -175,7 +175,7 @@ if submitted:
                 if icon_class is not None:
                     _icon = icon_class.copy()
                     _icon.thumbnail((48, 48))
-                    st.image(_icon, width=48, use_column_width=False)
+                    st.image(_icon, width=48, use_container_width=False)
             with col_text:
                 st.success(f"🔹 Predicción (Clasificación): **{pred_class}** — Probabilidad positiva: **{prob:.2%}**")
 
@@ -211,7 +211,7 @@ if submitted:
             if icon_reg is not None:
                 _icon = icon_reg.copy()
                 _icon.thumbnail((48, 48))
-                st.image(_icon, width=48, use_column_width=False)
+                st.image(_icon, width=48, use_container_width=False)
         with col_text:
             st.info(f"🔸 Predicción (Regresión): **{final_value:.3f}**")
             st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.**")
@@ -219,6 +219,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
