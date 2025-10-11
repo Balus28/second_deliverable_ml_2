@@ -214,11 +214,12 @@ if submitted:
                 st.image(_icon, width=48, use_container_width=False)
         with col_text:
             st.info(f"🔸 Predicción (Regresión): **{final_value:.3f}**")
-            st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.**")
+            st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.")
             st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
