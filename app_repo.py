@@ -23,7 +23,7 @@ st.markdown(
 )
 
 st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
-st.caption("💡 Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
+st.caption("Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
 
 # ===============================================================
 # CARGA DE MODELOS
@@ -44,9 +44,9 @@ def load_regression_model():
 try:
     clas_model = load_classification_model()
     reg_model = load_regression_model()
-    st.success("✅ Modelos cargados correctamente.")
+    st.success("Modelos cargados correctamente.")
 except Exception as e:
-    st.error(f"⚠️ Error al cargar los modelos: {e}")
+    st.error(f"Error al cargar los modelos: {e}")
 
 # ===============================================================
 # CREACIÓN INTERNA DEL SCALER Y FUNCIÓN DE INVERSIÓN
@@ -82,10 +82,10 @@ def safe_inverse_transform(value):
 # DEFINICIÓN DE VARIABLES
 # ===============================================================
 feature_specs = [
-    {"name": "Age", "type": "int"},
-    {"name": "Heart_Rate", "type": "float"},
-    {"name": "Duration", "type": "float"},
-    {"name": "Weight", "type": "float"}  # Solo usada para la regresión
+    {"name": "Age", "type": "int", "unit":"años", "description":"Edad del individuo"},
+    {"name": "Heart_Rate", "type": "float", "unit":"lpm", "description":"Latidos por minutos del individuo"},
+    {"name": "Duration", "type": "float", "unit":"minutos"m "description":"Duración de la actividad física"},
+    {"name": "Weight", "type": "float", "unit":"kg", "description":"Peso corporal del individuo"}  # Solo usada para la regresión
 ]
 
 # ===============================================================
@@ -148,3 +148,4 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
