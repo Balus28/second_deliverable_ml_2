@@ -13,19 +13,7 @@ import io
 
 ###################################################################################################
 # CONFIGURACIÓN DE LA APP
-st.set_page_config(page_title="Predicción Automática", page_icon="assests/logo.png", layout="wide")
-
-st.markdown(
-    """
-    <h1 style="background-color:#004aad; color:white; padding:10px; text-align:center; border-radius:10px;">
-        Sistema de Predicción Automática
-    </h1>
-    """,
-    unsafe_allow_html=True
-)
-
-st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
-st.caption("Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
+st.set_page_config(page_title="Predicción Automática", page_icon="assets/logo.png", layout="wide")
 
 ###################################################################################################
 # CONFIGURACIÓN PARA EL USO DE IMÁGENES
@@ -37,51 +25,47 @@ ASSETS_DIR = "assets"  # Carpeta local con las imágenes
 def load_image(path):
     return Image.open(path)
 
-# Utilitaria para cambiar a formato base64
-def image_to_base64(path):
-    with open(path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode("utf-8")
-
 # Rutas de las imágenes
 logo_path = os.path.join(ASSETS_DIR, "logo.png")
 icon_class_path = os.path.join(ASSETS_DIR, "icon_class.png")
 icon_reg_path = os.path.join(ASSETS_DIR, "icon_reg.png")
 
 # Validación de existencia
-if os.path.exists(logo_path):
-    logo_img = load_image(logo_path)
-else: 
-    logo_img = None
+logo_img = load_image(logo_path) if os.path.exists(logo_path) else None
+icon_class = load_image(icon_class_path) if os.path.exists(icon_class_path) else None
+icon_reg = load_image(icon_reg_path) if os.path.exists(icon_reg_path) else None
 
-if os.path.exists(icon_class_path):
-    icon_class = load_image(icon_class_path)
-else: 
-    icon_class = None
-
-if os.path.exists(icon_reg_path):
-    icon_reg = load_image(icon_reg_path)
-else: 
-    icon_reg = None
-
-# Encabezado con logo
-st.set_page_config(page_title="Sistema de Predicción Automática", page_icon="assets/logo.png")
+###################################################################################################
+# ENCABEZADO UNIFICADO CON LOGO Y TÍTULO PRINCIPAL
 
 if logo_img is not None:
-    col_logo, col_title = st.columns([1, 8])
+    col_logo, col_title = st.columns([1, 9])
     with col_logo:
-        st.image(logo_img, width=140, use_column_width=False)
+        st.image(logo_img, width=120, use_column_width=False)
     with col_title:
         st.markdown(
-            "<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
+            """
+            <h1 style="background-color:#004aad; color:white; padding:10px; 
+                       text-align:center; border-radius:10px; margin-bottom:0;">
+                Sistema de Predicción Automática
+            </h1>
+            """,
             unsafe_allow_html=True
         )
 else:
-    # Use the same HTML-based header for consistent spacing
     st.markdown(
-        "<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
+        """
+        <h1 style="background-color:#004aad; color:white; padding:10px; 
+                   text-align:center; border-radius:10px; margin-bottom:0;">
+            Sistema de Predicción Automática
+        </h1>
+        """,
         unsafe_allow_html=True
     )
+
+# Mensajes introductorios
+st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
+st.caption("Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
 
 ##############################################################################################
 # CARGA DE MODELOS
@@ -235,6 +219,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
