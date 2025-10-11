@@ -41,7 +41,7 @@ icon_reg = load_image(icon_reg_path) if os.path.exists(icon_reg_path) else None
 if logo_img is not None:
     col_logo, col_title = st.columns([1, 9])
     with col_logo:
-        st.image(logo_img, width=120, use_column_width=False)
+        st.image(logo_img, width=120, use_container_width=False)
     with col_title:
         st.markdown(
             """
@@ -219,6 +219,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
