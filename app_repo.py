@@ -7,10 +7,12 @@ import pickle
 import lightgbm
 import numpy as np
 from sklearn.preprocessing import RobustScaler
+from PIL import Image, ImageOps
+import base64
+import io
 
-# ===============================================================
+###################################################################################################
 # CONFIGURACIÓN DE LA APP
-# ===============================================================
 st.set_page_config(page_title="Predicción Automática", page_icon="🤖", layout="wide")
 
 st.markdown(
@@ -25,9 +27,56 @@ st.markdown(
 st.info("Introduce los valores de entrada y obtén una predicción automática con los modelos entrenados (clasificación y regresión).")
 st.caption("Si deseas realizar otra predicción, simplemente cambia los valores y presiona nuevamente el botón correspondiente.")
 
-# ===============================================================
+###################################################################################################
+# CONFIGURACIÓN PARA EL USO DE IMÁGENES
+
+ASSETS_DIR = "assets"  # Carpeta local con las imágenes
+
+# Se carga la imagen al cache (memoria temporal de rápido acceso)
+@st.cache_resource
+def load_image(path):
+    return Image.open(path)
+
+# Utilitaria para cambiar a formato base64
+def image_to_base64(path):
+    with open(path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode("utf-8")
+
+# Rutas de las imágenes
+logo_path = os.path.join(ASSETS_DIR, "logo.png")
+icon_class_path = os.path.join(ASSETS_DIR, "class.png")
+icon_reg_path = os.path.join(ASSETS_DIR, "reg.png")
+
+# Validación de existencia
+if os.path.exists(logo_path):
+    logo_img = load_image(logo_path)
+else: 
+    logo_img = None
+
+if os.path.exists(icon_class_path):
+    icon_class = load_image(icon_class_path)
+else: 
+    icon_class = None
+
+if os.path.exists(icon_reg_path):
+    icon_reg = load_image(icon_reg_path)
+else: 
+    icon_reg = None
+
+# Encabezado con logo
+if logo_img is not None:
+    col_logo, col_title = st.columns([1,8])
+    with col_logo:
+        st.image(logo_img, width=140, use_column_width=False)
+    with col_title:
+        st.markdown("<h1 style='margin:0;padding-top:10px;'>Sistema de Predicción Automática</h1>",
+                    unsafe_allow_html=True)
+else:
+    st.title("Sistema de Predicción Automática")
+
+##############################################################################################
 # CARGA DE MODELOS
-# ===============================================================
 
 @st.cache_resource
 def load_classification_model():
@@ -48,12 +97,9 @@ try:
 except Exception as e:
     st.error(f"Error al cargar los modelos: {e}")
 
-# ===============================================================
+################################################################################################
 # CREACIÓN INTERNA DEL SCALER Y FUNCIÓN DE INVERSIÓN
-# ===============================================================
 
-# Parámetros base para recrear un RobustScaler inverso
-# (puedes ajustarlos si sabes los rangos típicos de tu variable objetivo)
 internal_center = 0.0
 internal_scale = 1.0
 
@@ -68,7 +114,6 @@ def safe_inverse_transform(value):
     Si el valor parece ya en escala original, lo devuelve tal cual.
     """
     try:
-        # Detección simple: si el valor parece "escalado" (pequeño rango)
         if abs(value) < 10:
             value_array = np.array(value).reshape(-1, 1)
             inv_value = internal_scaler.inverse_transform(value_array)[0][0]
@@ -78,19 +123,19 @@ def safe_inverse_transform(value):
     except Exception:
         return value
 
-# ===============================================================
+#################################################################################################
 # DEFINICIÓN DE VARIABLES
-# ===============================================================
+
 feature_specs = [
-    {"name": "Edad", "type": "int", "unit":"años", "description":"Edad del individuo"},
-    {"name": "Ritmo cardiáco", "type": "float", "unit":"bpm", "description":"Latidos por minutos del individuo"},
-    {"name": "Duración", "type": "float", "unit":"minutos","description":"Duración de la actividad física"},
-    {"name": "Peso", "type": "float", "unit":"kg", "description":"Peso corporal del individuo"}  # Solo usada para la regresión
+    {"name": "Edad", "type": "int", "unit": "años", "description": "Edad del individuo"},
+    {"name": "Ritmo cardiáco", "type": "float", "unit": "bpm", "description": "Latidos por minuto del individuo"},
+    {"name": "Duración", "type": "float", "unit": "minutos", "description": "Duración de la actividad física"},
+    {"name": "Peso", "type": "float", "unit": "kg", "description": "Peso corporal del individuo"}  # Solo usada para la regresión
 ]
 
-# ===============================================================
+################################################################################################
 # FORMULARIO DE ENTRADA
-# ===============================================================
+
 st.subheader("🧮 Formulario de datos de entrada")
 user_input = {}
 
@@ -102,20 +147,28 @@ with st.form("formulario_prediccion"):
             tooltip = spec['description']
             user_input[spec["name"]] = st.number_input(
                 label,
-                value = 0.0 if spec["type"] == "float" else 0,
-                key = spec["name"],
+                value=0.0 if spec["type"] == "float" else 0,
+                key=spec["name"],
                 help=tooltip
-                
             )
     submitted = st.form_submit_button("🔍 Obtener Predicciones")
 
-# ===============================================================
+################################################################################################
 # PROCESO DE PREDICCIÓN
-# ===============================================================
+
 if submitted:
     input_df = pd.DataFrame([user_input])
     st.write("**Datos ingresados:**")
     st.dataframe(input_df)
+
+    # Mapeo de nombres al inglés (para compatibilidad con el modelo)
+    rename_map = {
+        "Edad": "Age",
+        "Ritmo cardiáco": "Heart_Rate",
+        "Duración": "Duration",
+        "Peso": "Weight"
+    }
+    input_df.rename(columns=rename_map, inplace=True)
 
     # ---------------- Clasificación ----------------
     try:
@@ -124,13 +177,22 @@ if submitted:
 
         if hasattr(clas_model, "predict_proba"):
             prob = clas_model.predict_proba(input_class)[0][1]
-            st.success(f"🔹 Predicción (Clasificación): **{pred_class}** — Probabilidad positiva: **{prob:.2%}**")
-            if prob > 0.7:
-                st.captation("Interpretación: Alta probabilidad de quemar más de 80 calorías quemadas durante la sesión.")
-            elif prob > 0.4:
-                st.captation("Interpretación: Probabilidad moderada de quemar más de 80 calorías quemadas durante la sesión.")
-            else: 
-                st.captation("Interpretación: Baja probabilidad de quemar más de 80 calorías quemadas durante la sesión.")
+
+            col_icon, col_text = st.columns([0.6, 9])
+            with col_icon:
+                if icon_class is not None:
+                    _icon = icon_class.copy()
+                    _icon.thumbnail((48, 48))
+                    st.image(_icon, width=48, use_column_width=False)
+            with col_text:
+                st.success(f"🔹 Predicción (Clasificación): **{pred_class}** — Probabilidad positiva: **{prob:.2%}**")
+
+                if prob > 0.7:
+                    st.caption("Interpretación: Alta probabilidad de quemar más de 80 calorías durante la sesión.")
+                elif prob > 0.4:
+                    st.caption("Interpretación: Probabilidad moderada de quemar más de 80 calorías durante la sesión.")
+                else:
+                    st.caption("Interpretación: Baja probabilidad de quemar más de 80 calorías durante la sesión.")
         else:
             st.success(f"🔹 Predicción (Clasificación): **{pred_class}**")
 
@@ -150,15 +212,23 @@ if submitted:
         pred_reg = reg_model.predict(input_df)
         pred_reg_value = pred_reg[0] if isinstance(pred_reg, (list, np.ndarray)) else pred_reg
 
-        # Aplicar inverse scaling manual si el valor parece escalado
         final_value = safe_inverse_transform(pred_reg_value)
 
-        st.info(f"🔸 Predicción (Regresión): **{final_value:.3f}**")
-        st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.")
-        st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
+        col_icon, col_text = st.columns([0.6, 9])
+        with col_icon:
+            if icon_reg is not None:
+                _icon = icon_reg.copy()
+                _icon.thumbnail((48, 48))
+                st.image(_icon, width=48, use_column_width=False)
+        with col_text:
+            st.info(f"🔸 Predicción (Regresión): **{final_value:.3f}**")
+            st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.**")
+            st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
+
 
 
 
