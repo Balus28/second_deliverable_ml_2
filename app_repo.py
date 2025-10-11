@@ -120,7 +120,7 @@ def safe_inverse_transform(value):
 
 feature_specs = [
     {"name": "Edad", "type": "int", "unit": "años", "description": "Edad del individuo"},
-    {"name": "Ritmo cardiáco", "type": "float", "unit": "bpm", "description": "Latidos por minuto del individuo"},
+    {"name": "Ritmo cardiáco", "type": "float", "unit": "lpm", "description": "Latidos por minuto del individuo"},
     {"name": "Duración", "type": "float", "unit": "minutos", "description": "Duración de la actividad física"},
     {"name": "Peso", "type": "float", "unit": "kg", "description": "Peso corporal del individuo"}  # Solo usada para la regresión
 ]
@@ -219,6 +219,7 @@ if submitted:
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
 
 
