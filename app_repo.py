@@ -98,10 +98,14 @@ with st.form("formulario_prediccion"):
     cols = st.columns(2)
     for i, spec in enumerate(feature_specs):
         with cols[i % 2]:
+            label = f"{spec['name']} ({spec['unit']})"
+            tooltip = spec['description']
             user_input[spec["name"]] = st.number_input(
-                f"{spec['name']}",
-                value=0.0 if spec["type"] == "float" else 0,
-                key=spec["name"]
+                label,
+                value = 0.0 if spec["type"] == "float" else 0,
+                key = spec["name"],
+                help=tooltip
+                
             )
     submitted = st.form_submit_button("🔍 Obtener Predicciones")
 
@@ -121,6 +125,12 @@ if submitted:
         if hasattr(clas_model, "predict_proba"):
             prob = clas_model.predict_proba(input_class)[0][1]
             st.success(f"🔹 Predicción (Clasificación): **{pred_class}** — Probabilidad positiva: **{prob:.2%}**")
+            if prob > 0.7:
+                st.captation("Interpretación: Alta probabilidad de quemar más de 80 calorías quemadas durante la sesión.")
+            elif prob > 0.4:
+                st.captation("Interpretación: Probabilidad moderada de quemar más de 80 calorías quemadas durante la sesión.")
+            else: 
+                st.captation("Interpretación: Baja probabilidad de quemar más de 80 calorías quemadas durante la sesión.")
         else:
             st.success(f"🔹 Predicción (Clasificación): **{pred_class}**")
 
@@ -144,8 +154,10 @@ if submitted:
         final_value = safe_inverse_transform(pred_reg_value)
 
         st.info(f"🔸 Predicción (Regresión): **{final_value:.3f}**")
+        st.caption("** Este valor representa una estimación de las calorías quemadas durante la sesión, basadas en los datos del usuario.")
         st.caption("Si deseas otra predicción, modifica los valores y presiona el botón nuevamente.")    
 
     except Exception as e:
         st.error(f"❌ Error al realizar la predicción de regresión: {e}")
+
 
